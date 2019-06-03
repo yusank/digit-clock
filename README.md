@@ -24,4 +24,4 @@ $ digitalClock -s
 
 ## screenshot
 
-![image](https://github.com/yusank/digitalClock/screenshot-digit-clock.png)
+![image](https://github.com/yusank/digitalClock/blob/master/screenshot-digit-clock.png)
