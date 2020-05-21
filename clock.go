@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"log"
 	"os"
 	"time"
 
@@ -15,6 +16,7 @@ var (
 )
 
 const (
+	dateFormat    = "2006/01/02 15:04:05"
 	secondFormat  = "15:04:05"
 	defTimeFormat = "15:04"
 )
@@ -24,21 +26,33 @@ type pos struct {
 }
 
 func main() {
+	logFile, err := os.OpenFile("stderr.log", os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0777)
+	if err != nil {
+		panic(err)
+	}
+
+	log.SetOutput(logFile)
 	var (
-		stop      = make(chan bool, 0)
-		timeStr   = make(chan string, 0)
-		isShowSec bool
+		stop       = make(chan bool, 0)
+		timeStr    = make(chan string, 0)
+		isShowSec  bool
+		isShowDate bool
 	)
 
 	flagSet := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 	flagSet.BoolVar(&isShowSec, "s", false, "is show second")
+	flagSet.BoolVar(&isShowDate, "t", false, "is show date")
 	_ = flagSet.Parse(os.Args[1:])
 
 	if isShowSec {
 		timeFormat = secondFormat
 	}
 
-	err := termbox.Init()
+	if isShowDate {
+		timeFormat = dateFormat
+	}
+
+	err = termbox.Init()
 	if err != nil {
 		panic(err)
 	}
@@ -174,12 +188,15 @@ func checkPosition(s rune, p pos) bool {
 		}
 		return p.y < midY && p.x < lineWid
 	case ':':
-
 		if p.x > midX || p.x < midX-lineWid {
 			return false
 		}
 
 		return p.y == midY+1 || p.y == midY-1
+	case '/':
+		dot := (p.x + p.y) / 2
+		log.Println(dot, midX)
+		return dot == midX
 	}
 
 	return false
