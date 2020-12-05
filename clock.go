@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -33,15 +34,17 @@ func main() {
 
 	log.SetOutput(logFile)
 	var (
-		stop       = make(chan bool, 0)
-		timeStr    = make(chan string, 0)
+		stop       = make(chan bool)
+		timeStr    = make(chan string)
 		isShowSec  bool
 		isShowDate bool
+		countDown int
 	)
 
 	flagSet := flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 	flagSet.BoolVar(&isShowSec, "s", false, "is show second")
 	flagSet.BoolVar(&isShowDate, "t", false, "is show date")
+	flagSet.IntVar(&countDown, "d", 0, "倒计时时间")
 	_ = flagSet.Parse(os.Args[1:])
 
 	if isShowSec {
@@ -60,6 +63,23 @@ func main() {
 
 	go func() {
 		ticker := time.NewTicker(1 * time.Second)
+		if  countDown > 0 {
+			timer := time.NewTimer(time.Second*time.Duration(countDown))
+			for {
+				select {
+				case <- timer.C:
+					stop <- true
+					return
+				case <- ticker.C:
+					hour := countDown/3600
+					minute := countDown%3600 /60
+					sec := countDown%60
+					timeStr <- fmt.Sprintf("%02d:%02d:%02d",hour,minute,sec)	
+					}
+
+					countDown--
+				}
+			}
 		for t := range ticker.C {
 			timeStr <- t.Format(timeFormat)
 		}
